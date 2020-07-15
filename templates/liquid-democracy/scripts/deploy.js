@@ -1,7 +1,7 @@
 const deployTemplate = require('@aragon/templates-shared/scripts/deploy-template')
 
-const TEMPLATE_NAME = 'bare-template'
-const CONTRACT_NAME = 'BareTemplate'
+const TEMPLATE_NAME = 'liquid-democracy-template'
+const CONTRACT_NAME = 'LiquidDemocracyTemplate'
 
 module.exports = callback => {
   deployTemplate(web3, artifacts, TEMPLATE_NAME, CONTRACT_NAME)
