@@ -45,8 +45,7 @@ contract BaseTemplate is APMNamehash, IsContract {
     bytes32 constant internal TOKEN_MANAGER_APP_ID = 0x6b20a3010614eeebf2138ccec99f028a61c811b3b1a3343b6ff635985c75c91f;
     bytes32 constant internal SURVEY_APP_ID = 0x030b2ab880b88e228f2da5a3d19a2a31bc10dbf91fb1143776a6de489389471e;
     bytes32 constant internal DELEGABLE_VOTING_APP_ID = 0x962d75a3fcdae15ddc7ef4fe1d96f9af72169958e9bc683aedfee5f32e7c84a5;
-    // TODO: Get Delegable Token Manager namehash
-    bytes32 constant internal DELEGABLE_TOKEN_MANAGER_APP_ID = 0x962d75a3fcdae15ddc7ef4fe1d96f9af72169958e9bc683aedfee5f32e7c84a5;
+    bytes32 constant internal DELEGABLE_TOKEN_MANAGER_APP_ID = 0x612a0e063dccdc5e9b8980e4f084f2831ce5ccd6f9aaf90da5811a18da11f0c2;
 
     string constant private ERROR_ENS_NOT_CONTRACT = "TEMPLATE_ENS_NOT_CONTRACT";
     string constant private ERROR_DAO_FACTORY_NOT_CONTRACT = "TEMPLATE_DAO_FAC_NOT_CONTRACT";
