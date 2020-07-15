@@ -181,7 +181,7 @@ contract LiquidDemocracyTemplate is BaseTemplate {
         // Assign permissions
         ACL acl = ACL(_dao.acl());
         if (_useAgentAsVault) {
-            // _createCustomAgentPermissions(acl, Agent(agentOrVault), _mgmtVoting, _mgmtVoting);
+            _createCustomAgentPermissions(acl, Agent(agentOrVault), _mgmtVoting);
         }
         _createVaultPermissions(acl, agentOrVault, finance, _mgmtVoting);
         _createFinancePermissions(acl, finance, _mgmtVoting, _mgmtVoting);
@@ -218,9 +218,9 @@ contract LiquidDemocracyTemplate is BaseTemplate {
     }
 
     // TODO: Figure out how to set up whitelisting functionality
-    function _createCustomAgentPermissions(ACL _acl, Agent _agent, Voting _shareVoting, Voting _boardVoting) internal {
-        _acl.createPermission(_boardVoting, _agent, _agent.EXECUTE_ROLE(), _shareVoting);
-        _acl.createPermission(_boardVoting, _agent, _agent.RUN_SCRIPT_ROLE(), _shareVoting);
+    function _createCustomAgentPermissions(ACL _acl, Agent _agent, DelegableVoting _mgmtVotingApp) internal {
+        _acl.createPermission(_mgmtVotingApp, _agent, _agent.EXECUTE_ROLE(), _mgmtVotingApp);
+        _acl.createPermission(_mgmtVotingApp, _agent, _agent.RUN_SCRIPT_ROLE(), _mgmtVotingApp);
     }
 
     /***** internal cache functions *****/
