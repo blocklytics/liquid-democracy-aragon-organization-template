@@ -413,7 +413,10 @@ contract DelegableTokenManager is IDelegableTokenController, IForwarder, AragonA
 
     function _transferableBalance(address _holder, uint256 _time) internal view returns (uint256) {
         uint256 transferable = token.balanceOf(_holder);
-
+        if(token.delegationEnabled()) {
+            transferable = token.delegableBalance(_holder);
+        }
+        
         // This check is not strictly necessary for the current version of this contract, as
         // Token Managers now cannot assign vestings to themselves.
         // However, this was a possibility in the past, so in case there were vestings assigned to

@@ -1,3 +1,5 @@
 {
-	"name": "Bare Template"
+	"name": "Liquid Democracy Template",
+	 "author": "Chris Piatt <chris@blocklytics.org>",
+	 "description": "Template for deploying and setting up a DAO with multiple voting classes that have the ability to delegate voting power"
 }

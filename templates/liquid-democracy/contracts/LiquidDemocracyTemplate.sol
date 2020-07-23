@@ -59,7 +59,6 @@ contract LiquidDemocracyTemplate is BaseTemplate {
         DelegableTokenManager mgmtTokenManager = _installDelegableTokenManagerApp(dao, mgmtToken, _managementTokensTransferable, _managementTokensDelegable, _managementMaxTokens);
         DelegableVoting mgmtVotingApp = _installDelegableVotingApp(dao, mgmtToken, _managementVotingSettings);
         _grantManagementPrivileges(acl, mgmtTokenManager, mgmtVotingApp);
-        // _mintTokens(acl, mgmtTokenManager, _managementTokenHolders, _managementStakes);
         _cachePreparedDao(address(dao), address(mgmtTokenManager), address(mgmtVotingApp));
     }
 
@@ -79,21 +78,17 @@ contract LiquidDemocracyTemplate is BaseTemplate {
         uint8 _tokenDecimals,
         bool _tokenTransferable,
         bool _tokenDelegable,
-        // address[] _holders,
-        // uint256[] _stakes,
         uint64[3] _votingSettings,
         uint256 _maxTokens
     )
         external
     {
-        // require(_holders.length == _stakes.length, ERROR_BAD_ARRAY_LEN);
         _ensureMgmtCache();
 
         (Kernel dao, DelegableTokenManager mgmtTokenManager, DelegableVoting mgmtVotingApp) = _daoCache();
         DelegableMiniMeToken newToken = _createToken(_tokenName, _tokenSymbol, _tokenDecimals, _tokenTransferable, _tokenDelegable);
         DelegableTokenManager newTokenManager = _installDelegableTokenManagerApp(dao, newToken, _tokenTransferable, _tokenDelegable, _maxTokens);
         DelegableVoting newVotingApp = _installDelegableVotingApp(dao, newToken, _votingSettings);
-        // _mintTokens(ACL(dao.acl()), newTokenManager, _holders, _stakes);
         _createTokenManagerPermissions(ACL(dao.acl()), newTokenManager, newVotingApp, mgmtVotingApp);
         _createDelegableVotingPermissions(ACL(dao.acl()), newVotingApp, mgmtVotingApp, newTokenManager, mgmtVotingApp);
     }
@@ -123,41 +118,8 @@ contract LiquidDemocracyTemplate is BaseTemplate {
         Finance finance = _setupVaultAndFinanceApps(dao, _financePeriod, _useAgentAsVault, mgmtVotingApp);
 
         _mintTokens(ACL(dao.acl()), mgmtTokenManager, _managementTokenHolders, _managementStakes);
-        _transferCreatePaymentManagerFromTemplate(ACL(dao.acl()), finance, mgmtVotingApp);
-        _transferRootPermissionsFromTemplateAndFinalizeDAO(dao, mgmtVotingApp);
-        _registerID(_id, address(dao));
-    }
+        _createTokenManagerPermissions(ACL(dao.acl()), mgmtTokenManager, mgmtVotingApp, mgmtVotingApp);
 
-    /**
-    * @dev Finalize a previously prepared DAO instance cached by the user
-    * @param _id String with the name for org, will assign `[id].aragonid.eth`
-    * @param _managementTokenHolders Array of addresses of management token holders at launch
-    * @param _managementStakes Array of balances of management token holders at launch
-    * @param _financePeriod Initial duration for accounting periods, it can be set to zero in order to use the default of 30 days.
-    * @param _useAgentAsVault Boolean to tell whether to use an Agent app as a more advanced form of Vault app
-    * @param _payrollSettings Array of [address denominationToken , IFeed priceFeed, uint64 rateExpiryTime, address employeeManager]
-             for the payroll app. The `employeeManager` can be set to `0x0` in order to use the management voting app as the employee manager.
-    */
-    function finalizeInstance(
-        string _id,
-        address[] _managementTokenHolders,
-        uint256[] _managementStakes,
-        uint64 _financePeriod,
-        bool _useAgentAsVault,
-        uint256[4] _payrollSettings
-    )
-        external
-    {
-        _validateId(_id);
-        _ensureMgmtCache();
-        require(_payrollSettings.length == 4, ERROR_BAD_PAYROLL_SETTINGS);
-
-        (Kernel dao, DelegableTokenManager mgmtTokenManager, DelegableVoting mgmtVotingApp) = _popDaoCache();
-
-        Finance finance = _setupVaultAndFinanceApps(dao, _financePeriod, _useAgentAsVault, mgmtVotingApp);
-        _setupPayrollApp(dao, finance, _payrollSettings, mgmtVotingApp);
-
-        _mintTokens(ACL(dao.acl()), mgmtTokenManager, _managementTokenHolders, _managementStakes);
         _transferCreatePaymentManagerFromTemplate(ACL(dao.acl()), finance, mgmtVotingApp);
         _transferRootPermissionsFromTemplateAndFinalizeDAO(dao, mgmtVotingApp);
         _registerID(_id, address(dao));
@@ -190,21 +152,6 @@ contract LiquidDemocracyTemplate is BaseTemplate {
         return finance;
     }
 
-    function _setupPayrollApp(
-        Kernel _dao, 
-        Finance _finance, 
-        uint256[4] memory _payrollSettings, 
-        DelegableVoting _mgmtVoting
-    ) internal {
-        (address denominationToken, IFeed priceFeed, uint64 rateExpiryTime, address employeeManager) = _unwrapPayrollSettings(_payrollSettings);
-        address manager = employeeManager == address(0) ? _mgmtVoting : employeeManager;
-
-        Payroll payroll = _installPayrollApp(_dao, _finance, denominationToken, priceFeed, rateExpiryTime);
-        ACL acl = ACL(_dao.acl());
-        _createPayrollPermissions(acl, payroll, manager, _mgmtVoting, _mgmtVoting);
-        _grantCreatePaymentPermission(acl, _finance, payroll);
-    }
-
     /***** permissions allocation *****/
 
     function _grantManagementPrivileges(
@@ -213,7 +160,6 @@ contract LiquidDemocracyTemplate is BaseTemplate {
         DelegableVoting _mgmtVotingApp
     ) {
         _createEvmScriptsRegistryPermissions(_acl, _mgmtVotingApp, _mgmtVotingApp);
-        _createTokenManagerPermissions(_acl, _mgmtTokenManager, _mgmtVotingApp, _mgmtVotingApp);
         _createDelegableVotingPermissions(_acl, _mgmtVotingApp, _mgmtVotingApp, _mgmtTokenManager, _mgmtVotingApp);
     }
 
