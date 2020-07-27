@@ -7,13 +7,7 @@ import "./DelegableTokenManager.sol";
 
 contract LiquidDemocracyTemplate is BaseTemplate {
     string constant private ERROR_MISSING_CACHE = "LD_MISSING_CACHE";
-    string constant private ERROR_ARRAY_MUST_HAVE_ITEMS = "LD_ARRAYS_MUST_BE_HAVE_ITEMS";
-    string constant private ERROR_MISSING_HOLDERS = "LD_MISSING_HOLDERS";
-    string constant private ERROR_BAD_HOLDERS_STAKES_LEN = "LD_BAD_HOLDERS_STAKES_LEN";
     string constant private ERROR_BAD_ARRAY_LEN = "LD_ARRAYS_MUST_BE_SAME_LENGTH";
-    string constant private ERROR_BAD_VOTE_SETTINGS = "LD_BAD_VOTE_SETTINGS";
-    string constant private ERROR_BAD_PAYROLL_SETTINGS = "LD_BAD_PAYROLL_SETTINGS";
-    string constant private ERROR_MINIME_FACTORY_NOT_PROVIDED = "TEMPLATE_MINIME_FAC_NOT_PROVIDED";
 
     uint64 constant private DEFAULT_FINANCE_PERIOD = uint64(30 days);
 
@@ -21,9 +15,13 @@ contract LiquidDemocracyTemplate is BaseTemplate {
         address dao;
         address mgmtTokenManager;
         address mgmtVotingApp;
+        address deptTokenManager;
+        address deptVotingApp;
     }
 
     mapping (address => Cache) internal cache;
+
+    event DepartmentCreated(address org, address department, address tokenManager, address token, bool isMgmt);
 
     constructor(DAOFactory _daoFactory, ENS _ens, DelegableMiniMeTokenFactory _miniMeFactory, IFIFSResolvingRegistrar _aragonID)
         BaseTemplate(_daoFactory, _ens, _miniMeFactory, _aragonID)
@@ -60,6 +58,7 @@ contract LiquidDemocracyTemplate is BaseTemplate {
         DelegableVoting mgmtVotingApp = _installDelegableVotingApp(dao, mgmtToken, _managementVotingSettings);
         _grantManagementPrivileges(acl, mgmtTokenManager, mgmtVotingApp);
         _cachePreparedDao(address(dao), address(mgmtTokenManager), address(mgmtVotingApp));
+        DepartmentCreated(address(dao), address(mgmtVotingApp), address(mgmtTokenManager), address(mgmtToken), true);
     }
 
     /**
@@ -89,9 +88,28 @@ contract LiquidDemocracyTemplate is BaseTemplate {
         DelegableMiniMeToken newToken = _createToken(_tokenName, _tokenSymbol, _tokenDecimals, _tokenTransferable, _tokenDelegable);
         DelegableTokenManager newTokenManager = _installDelegableTokenManagerApp(dao, newToken, _tokenTransferable, _tokenDelegable, _maxTokens);
         DelegableVoting newVotingApp = _installDelegableVotingApp(dao, newToken, _votingSettings);
-        _createTokenManagerPermissions(ACL(dao.acl()), newTokenManager, newVotingApp, mgmtVotingApp);
         _createDelegableVotingPermissions(ACL(dao.acl()), newVotingApp, mgmtVotingApp, newTokenManager, mgmtVotingApp);
+        _cacheDept(newTokenManager, newVotingApp);
+        DepartmentCreated(address(dao), address(newVotingApp), address(newTokenManager), address(newToken), false);
     }
+
+    /**
+    * @dev Distributes tokens to the most recently cached Department
+    * @param _deptTokenHolders Array of addresses of department token holders at launch
+    * @param _deptStakes Array of balances of department token holders at launch
+    */
+    function distributeDepartmentTokens(
+        address[] _deptTokenHolders,
+        uint256[] _deptStakes
+    )
+        external
+    {
+        require(_deptTokenHolders.length == _deptStakes.length, ERROR_BAD_ARRAY_LEN);
+        (Kernel dao, DelegableTokenManager deptTokenManager, DelegableVoting deptVotingApp, DelegableVoting mgmtVotingApp) = _popDeptCache();
+        _mintTokens(ACL(dao.acl()), deptTokenManager, _deptTokenHolders, _deptStakes);
+        _createTokenManagerPermissions(ACL(dao.acl()), deptTokenManager, deptVotingApp, mgmtVotingApp);
+    }
+
 
     /**
     * @dev Finalize a previously prepared DAO instance cached by the user
@@ -112,6 +130,8 @@ contract LiquidDemocracyTemplate is BaseTemplate {
     {
         _validateId(_id);
         _ensureMgmtCache();
+        
+        require(_managementTokenHolders.length == _managementStakes.length, ERROR_BAD_ARRAY_LEN);
 
         (Kernel dao, DelegableTokenManager mgmtTokenManager, DelegableVoting mgmtVotingApp) = _popDaoCache();
 
@@ -163,7 +183,6 @@ contract LiquidDemocracyTemplate is BaseTemplate {
         _createDelegableVotingPermissions(_acl, _mgmtVotingApp, _mgmtVotingApp, _mgmtTokenManager, _mgmtVotingApp);
     }
 
-    // TODO: Figure out how to set up whitelisting functionality
     function _createCustomAgentPermissions(ACL _acl, Agent _agent, DelegableVoting _mgmtVotingApp) internal {
         _acl.createPermission(_mgmtVotingApp, _agent, _agent.EXECUTE_ROLE(), _mgmtVotingApp);
         _acl.createPermission(_mgmtVotingApp, _agent, _agent.RUN_SCRIPT_ROLE(), _mgmtVotingApp);
@@ -184,11 +203,33 @@ contract LiquidDemocracyTemplate is BaseTemplate {
         c.mgmtVotingApp = _mgmtVotingApp;
     }
 
+    function _cacheDept(
+        address _deptTokenManager,
+        address _deptVotingApp
+    )
+        internal
+    {
+        Cache storage c = cache[msg.sender];
+        c.deptTokenManager = _deptTokenManager;
+        c.deptVotingApp = _deptVotingApp;
+    }
+
     function _daoCache() internal view returns (Kernel dao, DelegableTokenManager mgmtTokenManager, DelegableVoting mgmtVotingApp) {
         Cache storage c = cache[msg.sender];
         dao = Kernel(c.dao);
         mgmtTokenManager = DelegableTokenManager(c.mgmtTokenManager);
         mgmtVotingApp = DelegableVoting(c.mgmtVotingApp);
+    }
+
+    function _popDeptCache() internal returns (Kernel dao, DelegableTokenManager deptTokenManager, DelegableVoting deptVotingApp, DelegableVoting mgmtVotingApp) {
+        Cache storage c = cache[msg.sender];
+        require(c.dao != address(0) && c.deptTokenManager != address(0) && c.deptVotingApp != address(0) && c.mgmtVotingApp != address(0), ERROR_MISSING_CACHE);
+        dao = Kernel(c.dao);
+        deptTokenManager = DelegableTokenManager(c.deptTokenManager);
+        deptVotingApp = DelegableVoting(c.deptVotingApp);
+        mgmtVotingApp = DelegableVoting(c.mgmtVotingApp);
+        delete c.deptTokenManager;
+        delete c.deptVotingApp;
     }
 
     function _popDaoCache() internal returns (Kernel dao, DelegableTokenManager mgmtTokenManager, DelegableVoting mgmtVotingApp) {

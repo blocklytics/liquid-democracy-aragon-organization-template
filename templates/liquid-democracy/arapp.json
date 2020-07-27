@@ -13,7 +13,7 @@
     },
     "rinkeby": {
       "appName": "liquid-democracy-template.open.aragonpm.eth",
-      "address": "0xeff06e47ffdd98695b973b3e883b2700c350e3c2",
+      "address": "0x0bfb64ed9eb81d164b53b29162d7fa4020141c57",
       "network": "rinkeby",
       "registry": "0x98Df287B6C145399Aaa709692c8D308357bC085D"
     },

@@ -1,5 +1,5 @@
 Arguments: 
-  /Users/chrispiatt/.nvm/versions/node/v12.18.2/bin/node /Users/chrispiatt/.yarn/bin/yarn.js deploy:dao:rinkeby
+  /Users/chrispiatt/.nvm/versions/node/v12.18.2/bin/node /Users/chrispiatt/.yarn/bin/yarn.js ts
 
 PATH: 
   /Users/chrispiatt/.nvm/versions/node/v12.18.2/bin:/Users/chrispiatt/.yarn/bin:/Users/chrispiatt/.config/yarn/global/node_modules/.bin:/Users/chrispiatt/google-cloud-sdk/bin:/Users/chrispiatt/.cargo/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/go/bin:/usr/local/MacGPG2/bin:/usr/local/share/dotnet:~/.dotnet/tools:/Users/chrispiatt/.yarn/bin:/Users/chrispiatt/.config/yarn/global/node_modules/.bin:/Users/chrispiatt/google-cloud-sdk/bin:/Users/chrispiatt/.cargo/bin:/Users/chrispiatt/go/bin:/Users/chrispiatt/go/bin
@@ -14,7 +14,7 @@ Platform:
   darwin x64
 
 Trace: 
-  SyntaxError: /Users/chrispiatt/workspace/blocklytics/aragon/dao-templates/templates/liquid-democracy/package.json: Unexpected token } in JSON at position 3792
+  SyntaxError: /Users/chrispiatt/workspace/blocklytics/aragon/dao-templates/templates/liquid-democracy/package.json: Unexpected token . in JSON at position 3788
       at JSON.parse (<anonymous>)
       at /Users/chrispiatt/.yarn/lib/cli.js:1625:59
       at Generator.next (<anonymous>)
@@ -56,7 +56,8 @@ npm manifest:
       "publish:mainnet": "aragon apm publish major $(npm run deploy:mainnet | tail -n 1) --environment mainnet",
       "deploy:dao:rpc": "truffle exec scripts/deploy_dao.js --network rpc $(aragon apm versions | tail -n 1 | cut -d ' ' -f 3)",
       "deploy:dao:rinkeby": "truffle exec scripts/deploy_dao.js --network frame $(aragon apm versions --env rinkeby | tail -n 1 | cut -d ' ' -f 3)",
-      "deploy:dao:mainnet": "truffle exec scripts/deploy_dao.js --network frame $(aragon apm versions --env mainnet | tail -n 1 | cut -d ' ' -f 3)",
+      "deploy:dao:mainnet": "truffle exec scripts/deploy_dao.js --network frame $(aragon apm versions --env mainnet | tail -n 1 | cut -d ' ' -f 3)".
+      "ts": "truffle exec scripts/testStakes.js --network rinkeby 0x09D55a5bb8aEc2C68CBffE280021277f9Ff5c324 6903453"
     },
     "dependencies": {
       "@aragon/apps-shared-minime": "^1.0.0",
